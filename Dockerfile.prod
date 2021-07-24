@@ -1,0 +1,22 @@
+# Specify Base Image
+FROM node:alpine as build
+
+# Set working dir
+WORKDIR /app
+
+# add node modules to path
+ENV PATH /app/node_modules/.bin:$PATH
+
+# Install Dependencies
+COPY ./package.json ./
+RUN npm update
+RUN npm install yarn
+RUN yarn install
+COPY . ./
+RUN yarn build
+
+# Production Environment
+FROM nginx:stable-alpine
+COPY --from=build /app/build /app/build
+COPY --from=build /app/default.conf /etc/nginx/conf.d/
+CMD ["nginx", "-g", "daemon off;"]
